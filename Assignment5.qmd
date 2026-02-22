@@ -1,0 +1,141 @@
+---
+title: "Assignment_5"
+author: "Jacob_Hillman"
+date: "2026-02-22"
+format:
+  html:
+    toc: true
+    number-sections: true
+  pdf:
+    toc: true
+    number-sections: true
+---
+
+```{python}
+import pandas as pd
+import os
+os.getcwd()
+# Load dataset (CSV example)
+df = pd.read_csv("wdi.csv")
+
+# View first rows
+df.head()
+```
+
+#Exploratory Data Analysis
+
+##Looking at life expectancy
+```{python}
+df["life_expectancy"].mean()
+
+```
+
+
+```{python}
+df["life_expectancy"].quantile([0.25, 0.5, 0.75])
+```
+
+```{python}
+df["health_expenditure_gdp_share"].quantile([0.25, 0.5, 0.75])
+```
+
+##Looking at Correlations of Life Expectancy with Other Metrics
+```{python}
+corr = df["life_expectancy"].corr(df["health_expenditure_gdp_share"])
+print("Correlation:", corr)
+```
+
+```{python}
+corr = df["life_expectancy"].corr(df["education_expenditure_gdp_share"])
+print("Correlation:", corr)
+```
+
+```{python}
+
+```
+
+## Quantile Plot of Health Expenditure
+
+```{python}
+#| echo: false
+#| fig-cap: "Quantile plot showing the distribution of health expenditure as a percentage of GDP across countries. Data source: World Bank WDI."
+#| fig-alt: "Quantile plot of health expenditure"
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Ensure numeric and drop missing values
+df["health_expenditure_gdp_share"] = pd.to_numeric(df["health_expenditure_gdp_share"], errors="coerce")
+health_data = df["health_expenditure_gdp_share"].dropna()
+
+# Sort data and compute quantiles
+sorted_health = np.sort(health_data)
+quantiles = np.linspace(0, 1, len(sorted_health))
+
+# Plot quantiles
+plt.figure(figsize=(8,5))
+plt.plot(quantiles, sorted_health, marker='o', linestyle='-', color='green')
+plt.title("Quantile Plot of Health Expenditure (% of GDP)")
+plt.xlabel("Quantiles")
+plt.ylabel("Health Expenditure (% GDP)")
+plt.grid(True)
+plt.show()
+```
+
+---
+
+## Scatter Plot: Life Expectancy vs Health Expenditure
+
+```{python}
+#| echo: false
+#| fig-cap: "Scatter plot showing the relationship between life expectancy and health expenditure (% of GDP). Data source: World Bank WDI."
+#| fig-alt: "Scatter plot life expectancy vs health expenditure"
+
+
+# Ensure numeric and drop missing values
+df["life_expectancy"] = pd.to_numeric(df["life_expectancy"], errors="coerce")
+scatter_df = df.dropna(subset=["life_expectancy", "health_expenditure_gdp_share"])
+
+plt.figure(figsize=(8,5))
+plt.scatter(scatter_df["health_expenditure_gdp_share"], scatter_df["life_expectancy"], color='blue', alpha=0.6)
+plt.title("Life Expectancy vs Health Expenditure")
+plt.xlabel("Health Expenditure (% of GDP)")
+plt.ylabel("Life Expectancy (years)")
+plt.grid(True)
+
+# Optional: add linear trend line
+m, b = np.polyfit(scatter_df["health_expenditure_gdp_share"], scatter_df["life_expectancy"], 1)
+plt.plot(scatter_df["health_expenditure_gdp_share"], m*scatter_df["health_expenditure_gdp_share"] + b, color='red', linestyle='--')
+
+plt.show()
+```
+
+```{python}
+#| echo: false
+#| fig-cap: "Key summary statistics of selected indicators. Data source: World Bank WDI."
+#| fig-label: correlation
+import pandas as pd
+
+# Ensure numeric
+cols = ["life_expectancy", "health_expenditure_gdp_share", "education_expenditure_gdp_share"]
+for col in cols:
+    df[col] = pd.to_numeric(df[col], errors="coerce")
+
+# Compute key statistics
+summary_table = pd.DataFrame({
+    "Mean": df[cols].mean(),
+    "Median": df[cols].median(),
+    "Q1 (25%)": df[cols].quantile(0.25),
+    "Q3 (75%)": df[cols].quantile(0.75),
+    "Min": df[cols].min(),
+    "Max": df[cols].max(),
+    "Std Dev": df[cols].std()
+})
+
+# Optional: round for cleaner display
+summary_table = summary_table.round(2)
+
+summary_table
+```
+
+As shown in Figure @fig:correlation, the correlation between Health Expenditure as a percent of GDP and Life expectancy is rather low.
